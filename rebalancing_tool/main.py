@@ -2,11 +2,11 @@ import pandas as pd
 from glidepath import cash_glidepath, annuity_glidepath, drawdown_glidepath
 
 
-aviva_weekly = pd.read_excel('data/aviva_weekly/aviva_weekly_file.xlsx')
+av_weekly = pd.read_excel('data/av_weekly/av_weekly_file.xlsx')
 sw_weekly = pd.read_excel('data/sw_weekly/sw_weekly_file.xlsx')
 
 # process the data
-print(aviva_weekly.head())
+print(av_weekly.head())
 print(sw_weekly.head())
 
 def check_tool(df, cash_glidepath, annuity_glidepath, drawdown_glidepath):
@@ -23,4 +23,4 @@ def check_tool(df, cash_glidepath, annuity_glidepath, drawdown_glidepath):
         print()
 
 # Use the check tool
-check_tool(aviva_weekly, cash_glidepath, annuity_glidepath, drawdown_glidepath)
+check_tool(av_weekly, cash_glidepath, annuity_glidepath, drawdown_glidepath)
