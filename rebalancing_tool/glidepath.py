@@ -4,6 +4,7 @@ import calendar
 
 # Set pandas display options
 pd.set_option('display.max_rows', 100)
+pd.set_option('display.max_columns', 5)
 
 
 cash_glidepath = {
@@ -28,28 +29,21 @@ drawdown_glidepath = {
                 }
 
 current_year = datetime.datetime.today().year
-print(current_year)
 
 cash_glidepath_df = pd.DataFrame(cash_glidepath)
-print(cash_glidepath_df)
-
 cash_glidepath_df['total'] = cash_glidepath_df['MAG']+ cash_glidepath_df['DRF']  + cash_glidepath_df['cash']
-print('Cash glidepath: ')
-print(cash_glidepath_df)
+# print('Cash glidepath: ')
+# print(cash_glidepath_df)
 
 annuity_glidepath_df = pd.DataFrame(annuity_glidepath)
-print(annuity_glidepath_df)
-
 annuity_glidepath_df['total'] = annuity_glidepath_df['MAG']+ annuity_glidepath_df['pre_ret_fund']  + annuity_glidepath_df['cash']
-print('Annuity glidepath: ')
-print( annuity_glidepath_df)
+# print('Annuity glidepath: ')
+# print( annuity_glidepath_df)
 
 drawdown_glidepath_df = pd.DataFrame(drawdown_glidepath)
-print(drawdown_glidepath_df)
-
 drawdown_glidepath_df['total'] = drawdown_glidepath_df['MAG']+ drawdown_glidepath_df['DRF']  + drawdown_glidepath_df['cash']
-print('Drawdown glidepath: ')
-print(drawdown_glidepath_df)
+# print('Drawdown glidepath: ')
+# print(drawdown_glidepath_df)
 
 
 
@@ -67,11 +61,11 @@ def monthly_cash_glidepath():
             total = cash_glidepath_df.iloc[year]["total"] - month * ((cash_glidepath_df.iloc[year]["total"] - cash_glidepath_df.iloc[min(year+1, 8)]["total"]) / 12)
             data.append([month_number, mag, drf, cash, total])
     
-    df = pd.DataFrame(data, columns=['Month', 'MAG', 'DRF', 'Cash', 'Total'])
+    df = pd.DataFrame(data, columns=['month', 'MAG_cash_glidepath', 'DRF_cash_glidepath', 'cash_cash_glidepath', 'total_cash_glidepath'])
     return df
 
 monthly_cash_glidepath = monthly_cash_glidepath()
-print(monthly_cash_glidepath.head(100))
+#print(monthly_cash_glidepath.head(100))
 
 def monthly_annuity_glidepath():
     data = []
@@ -86,11 +80,11 @@ def monthly_annuity_glidepath():
             total = annuity_glidepath_df.iloc[year]["total"] - month * ((annuity_glidepath_df.iloc[year]["total"] - annuity_glidepath_df.iloc[min(year+1, 8)]["total"]) / 12)
             data.append([month_number, mag, pre_ret_fund, cash, total])
     
-    df = pd.DataFrame(data, columns=['Month', 'MAG', 'Pre_Ret_Fund', 'Cash', 'Total'])
+    df = pd.DataFrame(data, columns=['month', 'MAG_annuity_glidepath', 'pre_ret_fund_annuity_glidepath', 'cash_annuity_glidepath', 'total_annuity_glidepath'])
     return df
 
 monthly_annuity_glidepath = monthly_annuity_glidepath()
-print(monthly_annuity_glidepath.head(100))
+#print(monthly_annuity_glidepath.head(100))
 
 def monthly_drawdown_glidepath():
     data = []
@@ -105,34 +99,17 @@ def monthly_drawdown_glidepath():
             total = drawdown_glidepath_df.iloc[year]["total"] - month * ((drawdown_glidepath_df.iloc[year]["total"] - drawdown_glidepath_df.iloc[min(year+1, 8)]["total"]) / 12)
             data.append([month_number, mag, drf, cash, total])
     
-    df = pd.DataFrame(data, columns=['Month', 'MAG', 'DRF', 'Cash', 'Total'])
+    df = pd.DataFrame(data, columns=['month', 'MAG_drawdown_glidepath', 'DRF_drawdown_glidepath', 'cash_drawdown_glidepath', 'total_drawdown_glidepath'])
     return df
 
 monthly_drawdown_glidepath = monthly_drawdown_glidepath()
-print(monthly_drawdown_glidepath.head(100))
+#print(monthly_drawdown_glidepath.head(100))
 
 
 
-# def monthly_cash_glidepath():
-#     data = []
-#     current_year = datetime.datetime.today().year
-#     for year in range(9):  # We stop at 9 to include month 96
-#         for month in range(12):
-#             if year == 8 and month > 0:  # We only want the first month of the 9th year
-#                 break
-#             month_number = (year*12 + month)
-#             month_name = calendar.month_name[((month_number) % 12)+1 ]
-#             year_value = current_year + 8 - year
-#             mag = cash_glidepath_df.iloc[year]["MAG"] - month * ((cash_glidepath_df.iloc[year]["MAG"] - cash_glidepath_df.iloc[min(year+1, 8)]["MAG"]) / 12)
-#             drf = cash_glidepath_df.iloc[year]["DRF"] - month * ((cash_glidepath_df.iloc[year]["DRF"] - cash_glidepath_df.iloc[min(year+1, 8)]["DRF"]) / 12)
-#             cash = cash_glidepath_df.iloc[year]["cash"] - month * ((cash_glidepath_df.iloc[year]["cash"] - cash_glidepath_df.iloc[min(year+1, 8)]["cash"]) / 12)
-#             total = cash_glidepath_df.iloc[year]["total"] - month * ((cash_glidepath_df.iloc[year]["total"] - cash_glidepath_df.iloc[min(year+1, 8)]["total"]) / 12)
-#             data.append([month_number, month_name, year_value, mag, drf, cash, total])
-    
-#     df = pd.DataFrame(data, columns=['Month', 'Month_Name', 'Year', 'MAG', 'DRF', 'Cash', 'Total'])
-#     return df
+def all_glidepaths():
+    all_glidepaths = monthly_cash_glidepath.merge(monthly_annuity_glidepath, on='month', how='left').merge(monthly_drawdown_glidepath, on='month', how='left')
+    return all_glidepaths
 
-# df = monthly_cash_glidepath()
-# print(df.head(100))
-
-# def monthly_annuity_glidepath():
+all_glidepaths = all_glidepaths()
+print(all_glidepaths.head(100))
