@@ -2,50 +2,46 @@ import pandas as pd
 import datetime
 import calendar
 
-# Set pandas display options
-pd.set_option('display.max_rows', 100)
-pd.set_option('display.max_columns', 5)
 
 
 cash_glidepath = {
-                'year':             [8,7,6,5,4,3,2,1,0], 
-                'MAG':              [100,87.50,75.0,62.5,50.0,37.5,25.0,12.5,0],
-                'DRF':              [0,12.50,25.0,37.5,50.0,37.5,25.0,12.5,0],
-                'cash':             [0,0,0,0,0,25.0,50.0,75.0,100]
+                'year':             [    8,    7,    6,    5,    4,    3,    2,    1,     0], 
+                'MAG':              [100.0, 87.5, 75.0, 62.5, 50.0, 37.5, 25.0, 12.5,   0.0],
+                'DRF':              [  0.0, 12.5, 25.0, 37.5, 50.0, 37.5, 25.0, 12.5,   0.0],
+                'cash':             [  0.0,  0.0,  0.0,  0.0,  0.0, 25.0, 50.0, 75.0, 100.0]
                 }
 
 annuity_glidepath = {
-                'year':             [8,7,6,5,4,3,2,1,0], 
-                'MAG':              [100,87.50,75.0,62.5,50.0,37.5,25.0,12.5,0],
-                'pre_ret_fund':     [0,12.50,25.0,37.5,50.0,62.5,67.0,71.5,75.0],
-                'cash':             [0,0,0,0,0,0,8.0,16.0,25.0]
+                'year':             [    8,    7,    6,    5,    4,    3,    2,    1,    0], 
+                'MAG':              [100.0, 87.5, 75.0, 62.5, 50.0, 37.5, 25.0, 12.5,  0.0],
+                'pre_ret_fund':     [  0.0, 12.5, 25.0, 37.5, 50.0, 62.5, 67.0, 71.5, 75.0],
+                'cash':             [  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  8.0, 16.0, 25.0]
                 }
 
 drawdown_glidepath = {
-                'year':             [8,7,6,5,4,3,2,1,0], 
-                'MAG':              [100,87.50,75.0,62.5,50.0,37.5,25.0,12.5,0],
-                'DRF':              [0,12.50,25.0,37.5,50.0,62.5,67.0,71.5,75.0],
-                'cash':             [0,0,0,0,0,0,8.0,16.0,25.0]
+                'year':             [    8,    7,    6,    5,    4,    3,    2,    1,    0], 
+                'MAG':              [100.0, 87.5, 75.0, 62.5, 50.0, 37.5, 25.0, 12.5,  0.0],
+                'DRF':              [  0.0, 12.5, 25.0, 37.5, 50.0, 62.5, 75.0, 82.5, 75.0],
+                'cash':             [  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  5.0, 25.0]
+                }
+
+adjusted_drawdown_glidepath = {
+                'month':                      [    12,    11,    10,     9,     8,     7,     6,     5,     4,     3,     2,     1,     0 ],
+                'MAG_drawdown_glidepath':     [ 12.50, 11.46, 10.42,  9.38,  8.33,  7.29,  6.25,  5.21,  4.17,  3.13,  2.08,  1.04,  0.00 ],
+                'DRF_drawdown_glidepath':     [ 82.50, 71.79, 72.08, 72.37, 72.67, 72.96, 73.25, 73.54, 73.83, 74.12, 74.42, 74.71, 75.00 ],
+                'cash_drawdown_glidepath':    [  5.00, 16.75, 17.50, 18.25, 19.00, 19.75, 20.50, 21.25, 22.00, 22.75, 23.50, 24.25, 25.00 ]
                 }
 
 current_year = datetime.datetime.today().year
 
 cash_glidepath_df = pd.DataFrame(cash_glidepath)
 cash_glidepath_df['total'] = cash_glidepath_df['MAG']+ cash_glidepath_df['DRF']  + cash_glidepath_df['cash']
-# print('Cash glidepath: ')
-# print(cash_glidepath_df)
 
 annuity_glidepath_df = pd.DataFrame(annuity_glidepath)
 annuity_glidepath_df['total'] = annuity_glidepath_df['MAG']+ annuity_glidepath_df['pre_ret_fund']  + annuity_glidepath_df['cash']
-# print('Annuity glidepath: ')
-# print( annuity_glidepath_df)
 
 drawdown_glidepath_df = pd.DataFrame(drawdown_glidepath)
 drawdown_glidepath_df['total'] = drawdown_glidepath_df['MAG']+ drawdown_glidepath_df['DRF']  + drawdown_glidepath_df['cash']
-# print('Drawdown glidepath: ')
-# print(drawdown_glidepath_df)
-
-
 
 
 def monthly_cash_glidepath():
@@ -64,8 +60,6 @@ def monthly_cash_glidepath():
     df = pd.DataFrame(data, columns=['month', 'MAG_cash_glidepath', 'DRF_cash_glidepath', 'cash_cash_glidepath', 'total_cash_glidepath'])
     return df
 
-monthly_cash_glidepath = monthly_cash_glidepath()
-#print(monthly_cash_glidepath.head(100))
 
 def monthly_annuity_glidepath():
     data = []
@@ -83,8 +77,6 @@ def monthly_annuity_glidepath():
     df = pd.DataFrame(data, columns=['month', 'MAG_annuity_glidepath', 'pre_ret_fund_annuity_glidepath', 'cash_annuity_glidepath', 'total_annuity_glidepath'])
     return df
 
-monthly_annuity_glidepath = monthly_annuity_glidepath()
-#print(monthly_annuity_glidepath.head(100))
 
 def monthly_drawdown_glidepath():
     data = []
@@ -102,14 +94,23 @@ def monthly_drawdown_glidepath():
     df = pd.DataFrame(data, columns=['month', 'MAG_drawdown_glidepath', 'DRF_drawdown_glidepath', 'cash_drawdown_glidepath', 'total_drawdown_glidepath'])
     return df
 
-monthly_drawdown_glidepath = monthly_drawdown_glidepath()
-#print(monthly_drawdown_glidepath.head(100))
 
 
+def adjusted_drawdown_monthly_glidepath(monthly_drawdown_glidepath_func):
+    # Call the function to get the DataFrame
+    monthly_drawdown_glidepath_df = monthly_drawdown_glidepath_func()
 
-def all_glidepaths():
-    all_glidepaths = monthly_cash_glidepath.merge(monthly_annuity_glidepath, on='month', how='left').merge(monthly_drawdown_glidepath, on='month', how='left')
-    return all_glidepaths
+    # Convert the dictionary to a DataFrame
+    adjusted_drawdown_glidepath_df = pd.DataFrame(adjusted_drawdown_glidepath)
 
-all_glidepaths = all_glidepaths()
-print(all_glidepaths.head(100))
+    # Set 'month' as the index in both DataFrames
+    monthly_drawdown_glidepath_df.set_index('month', inplace=True)
+    adjusted_drawdown_glidepath_df.set_index('month', inplace=True)
+
+    # Update the rows in monthly_drawdown_glidepath_df with the corresponding rows in adjusted_drawdown_glidepath_df
+    monthly_drawdown_glidepath_df.update(adjusted_drawdown_glidepath_df)
+
+    # Reset the index if you want 'month' to be a column again
+    monthly_drawdown_glidepath_df.reset_index(inplace=True)
+    return monthly_drawdown_glidepath_df
+
