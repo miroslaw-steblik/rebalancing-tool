@@ -97,10 +97,7 @@ def monthly_drawdown_glidepath():
 
 
 def adjusted_drawdown_monthly_glidepath(monthly_drawdown_glidepath_func):
-    # Call the function to get the DataFrame
     monthly_drawdown_glidepath_df = monthly_drawdown_glidepath_func()
-
-    # Convert the dictionary to a DataFrame
     adjusted_drawdown_glidepath_df = pd.DataFrame(adjusted_drawdown_glidepath)
 
     # Set 'month' as the index in both DataFrames
@@ -110,7 +107,17 @@ def adjusted_drawdown_monthly_glidepath(monthly_drawdown_glidepath_func):
     # Update the rows in monthly_drawdown_glidepath_df with the corresponding rows in adjusted_drawdown_glidepath_df
     monthly_drawdown_glidepath_df.update(adjusted_drawdown_glidepath_df)
 
-    # Reset the index if you want 'month' to be a column again
     monthly_drawdown_glidepath_df.reset_index(inplace=True)
     return monthly_drawdown_glidepath_df
+
+
+def merged_glidepaths():
+    cash_glidepath_df = monthly_cash_glidepath()
+    annuity_glidepath_df = monthly_annuity_glidepath()
+    drawdown_glidepath_df = adjusted_drawdown_monthly_glidepath(monthly_drawdown_glidepath)
+    all_glidepaths_df = cash_glidepath_df.merge(annuity_glidepath_df, on='month', how='left').merge(drawdown_glidepath_df, on='month', how='left')
+    return all_glidepaths_df
+
+# all_glidepaths_df = merged_glidepaths()
+# print(all_glidepaths_df)
 
