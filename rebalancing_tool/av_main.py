@@ -2,10 +2,10 @@ import pandas as pd
 import sys
 
 
-from glidepath import merged_glidepaths
-import transformations as tr
-import validations as val
-import message as msg
+from utils.glidepath import merged_glidepaths
+import utils.transformations as tr
+import utils.validations as val
+import utils.message as msg
 
 #----------------------------- Pipeline ---------------------------------------#
 pre_columns = {
@@ -48,6 +48,7 @@ MAX_TEST = 0.03
 TEAMS_WEBHOOK_URL = "https://discord.com/api/webhooks/1249053406245425163/5ouTsWiWmP_v8aDsH0aujjjOA2OG7wdX56CyK389TuN92TTTirzMu0hyCjqXcJYotRCw"  # replace with your actual webhook URL
 
 PROVIDER = 'AV'
+GLIDEPATH_LOOKBACK = 'YES'
 
 
 #----------------------------- Functions ---------------------------------------#
@@ -80,7 +81,7 @@ def process():
     test = val.validate_columns(df, pre_columns)
     test = val.test_no_duplicates(df)  
 
-    df = tr.add_glidepath_data(df, PROVIDER)
+    df = tr.add_glidepath_data(df, GLIDEPATH_LOOKBACK)
     df = tr.add_lookup_values(df, all_glidepaths)
     df = tr.add_static_target_values(df, av_static_funds_targets)
     df = tr.calculate_difference_final(df)

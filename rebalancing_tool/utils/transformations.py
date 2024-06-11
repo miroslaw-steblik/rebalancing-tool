@@ -7,7 +7,7 @@ from tabulate import tabulate
 
 
 
-def add_glidepath_data(df, PROVIDER):
+def add_glidepath_data(df, GLIDEPATH_LOOKBACK):
     # add 'fund_glidepath' column
     conditions = [
         df['fund_label'].str.contains('Target Cash'),
@@ -33,7 +33,7 @@ def add_glidepath_data(df, PROVIDER):
     current_year = datetime.datetime.today().year 
     current_month_number = df['date'].dt.month   
     df['year'] = df['year'].astype(float)
-    add_value = 1 if PROVIDER == 'AV' else 0
+    add_value = 1 if GLIDEPATH_LOOKBACK == 'YES' else 0
     df.loc[df['year'].notnull(), 'month'] = ((df['year']-current_year ) * 12 - current_month_number + add_value).clip(lower=0)  # original statement considers values from 1 month ago
     return df
 
@@ -104,7 +104,8 @@ def post_transformations(df):
     df['diff'] = df['diff'].apply(lambda x: '{:.1%}'.format(x))
     df = df.sort_values(by='diff')
     return df
-    
+
+ 
 
 def print_message(df, date, PROVIDER):
 

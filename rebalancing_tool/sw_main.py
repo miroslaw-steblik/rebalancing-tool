@@ -1,11 +1,12 @@
 import pandas as pd
 import sys
+import os
 
 
-from glidepath import merged_glidepaths
-import transformations as tr
-import validations as val
-import message as msg
+from utils.glidepath import merged_glidepaths
+import utils.transformations as tr
+import utils.validations as val
+import utils.message as msg
 
 #----------------------------- Pipeline ---------------------------------------#
 pre_columns = {
@@ -37,7 +38,7 @@ post_columns = {
 }
 
 #----------------------------- Read data ---------------------------------------#
-sw_weekly = pd.read_excel('data/sw_weekly/sw_weekly_file.xlsx')
+sw_weekly = 'data/sw_weekly'
 
 sw_reference = pd.read_csv('data/reference/sw_reference.csv')
 sw_static_funds_targets = pd.read_csv('data/reference/sw_static_funds_targets.csv')
@@ -46,43 +47,49 @@ MIN_TEST = -0.03
 MAX_TEST = 0.03
 
 TEAMS_WEBHOOK_URL = "https://discord.com/api/webhooks/1249053406245425163/5ouTsWiWmP_v8aDsH0aujjjOA2OG7wdX56CyK389TuN92TTTirzMu0hyCjqXcJYotRCw"  # replace with your actual webhook URL
-
 PROVIDER = 'SW'
+GLIDEPATH_LOOKBACK = 'YES'
 
 
 #----------------------------- Process ---------------------------------------#
 
-def process_data(weekly_file, reference):
-    reference = sw_reference.drop_duplicates(subset='fund_key')
+
+
+def process_data(folder_path, reference):
+    reference = reference.drop_duplicates(subset='fund_key')
     reference_subset = reference[['fund_key', 'fund_glidepath']]
-    weekly_file = weekly_file.drop(columns=[
-        'MCH Code',
-        'Asset Pool',
-        'Code',
-        'Previous Val',
-        'Current Price',
-        'Previous Price',
-        'Val % Mvmt',
-        'Price % Mvmt'
-        ])
-    weekly_file = weekly_file.rename(columns={
-                                    'Fund Name': 'fund_label',
-                                    'Component Fund': 'fund_underlying',
-                                    'SW Codes': 'fund_key',
-                                    'Current Val': 'valuation',
-                                    'Mix At Date%': 'actual_weight',
-                                    'Allocation%': 'target_weight'
-                                    })
-    
-    # date_input = input("Please enter a date (YYYY-MM-DD): ")
-    date_input = '2024-05-31'
 
-    weekly_file = weekly_file.assign(date=date_input)
-    weekly_file['date'] = pd.to_datetime(weekly_file['date'])
-    df = weekly_file.merge(reference_subset, on='fund_key', how='left')
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".xlsx"):  # only process Excel files
+            file_path = os.path.join(folder_path, filename)
+            weekly_file = pd.read_excel(file_path)
 
-    return df
+            weekly_file = weekly_file.drop(columns=[
+                'MCH Code',
+                'Asset Pool',
+                'Code',
+                'Previous Val',
+                'Current Price',
+                'Previous Price',
+                'Val % Mvmt',
+                'Price % Mvmt'
+            ])
+            weekly_file = weekly_file.rename(columns={
+                                        'Fund Name': 'fund_label',
+                                        'Component Fund': 'fund_underlying',
+                                        'SW Codes': 'fund_key',
+                                        'Current Val': 'valuation',
+                                        'Mix At Date%': 'actual_weight',
+                                        'Allocation%': 'target_weight'
+                                        })
+            # date_input = input("Please enter a date (YYYY-MM-DD): ")
+            date_input = '2024-05-31'  # replace with your date input
 
+            weekly_file = weekly_file.assign(date=date_input)
+            weekly_file['date'] = pd.to_datetime(weekly_file['date'])
+            df = weekly_file.merge(reference_subset, on='fund_key', how='left')
+
+            return df  # yield the processed DataFrame
 
 
 
@@ -97,7 +104,7 @@ def process():
     test = val.validate_columns(df, pre_columns)
     test = val.test_no_duplicates(df)  
 
-    df = tr.add_glidepath_data(df, PROVIDER)
+    df = tr.add_glidepath_data(df, GLIDEPATH_LOOKBACK)
     df = tr.add_lookup_values(df, all_glidepaths)
     df = tr.add_static_target_values(df, sw_static_funds_targets)
     df = tr.calculate_difference_final(df)
@@ -114,6 +121,7 @@ def process():
     message = tr.print_message(validated_df, date, PROVIDER)
     print(message)
     #msg.send_teams_message(TEAMS_WEBHOOK_URL,message)
+    msg.send_message_to_teams(message, TEAMS_WEBHOOK_URL)
 
     message_size = sys.getsizeof(message)
     print(f"Size of message: {message_size} bytes")
