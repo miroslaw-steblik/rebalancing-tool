@@ -77,7 +77,7 @@ def monthly_annuity_glidepath():
             total = annuity_glidepath_df.iloc[year]["total"] - month * ((annuity_glidepath_df.iloc[year]["total"] - annuity_glidepath_df.iloc[min(year+1, 8)]["total"]) / 12)
             data.append([month_number, mag, pre_ret_fund, cash, total])
     
-    df = pd.DataFrame(data, columns=['month', 'fund1_annuity_glidepath', 'fund4_glidepath', 'fund3_annuity_glidepath', 'total_annuity_glidepath'])
+    df = pd.DataFrame(data, columns=['month', 'fund1_annuity_glidepath', 'fund4_annuity_glidepath', 'fund3_annuity_glidepath', 'total_annuity_glidepath'])
     return df
 
 
@@ -123,4 +123,4 @@ def merged_glidepaths():
 
 # glidepath = merged_glidepaths()
 # print(glidepath)
-
+# glidepath.to_csv('glidepath.csv', index=False)
