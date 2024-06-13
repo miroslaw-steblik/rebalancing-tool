@@ -121,6 +121,4 @@ def merged_glidepaths():
     all_glidepaths_df = cash_glidepath_df.merge(annuity_glidepath_df, on='month', how='left').merge(drawdown_glidepath_df, on='month', how='left')
     return all_glidepaths_df
 
-# glidepath = merged_glidepaths()
-# print(glidepath)
-# glidepath.to_csv('glidepath.csv', index=False)
+
