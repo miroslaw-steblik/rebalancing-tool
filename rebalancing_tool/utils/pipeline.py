@@ -271,7 +271,7 @@ def dataframe_to_adaptivecard_table(df):
     return table
 
  
-def send_dataframe_to_teams(df, webhook_url, provider):
+def send_dataframe_to_teams(df, webhook_url, provider,date_result):
     # Store 'date' column in a variable
     #date = df['date'].iloc[0]
 
@@ -296,7 +296,7 @@ def send_dataframe_to_teams(df, webhook_url, provider):
                     },
                     {
                         "type": "TextBlock",
-                        "text": f"Rebalancing Monitoring Report for {provider}, {date}",
+                        "text": f"Rebalancing Monitoring Report for {provider}, {date_result}",
                         "wrap": True
                     },
                     dataframe_to_adaptivecard_table(df)
