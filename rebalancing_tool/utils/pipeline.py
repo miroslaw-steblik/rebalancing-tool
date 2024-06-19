@@ -31,69 +31,59 @@ post_columns = {
     'glidepath_lookup_value': 'float64',
     'static_target_lookup_value': 'float64',
     'target_val': 'float64',
-    'diff': 'float64',
+    'difference': 'float64',
 }
 
+
+
+sw_read_columns = {
+                'Fund Name': 'fund_label',
+                'SW Codes': 'fund_key',
+                'Current Val': 'valuation',
+                'Mix At Date%': 'actual_weight',
+                'Allocation%': 'target_weight',
+                'Date': 'date'
+                }
+
+av_read_columns = {
+                'Date': 'date',
+                'Fund Name': 'fund_label',
+                'Description': 'fund_key',
+                'Holding Value': 'valuation',
+                'Weighting': 'actual_weight',
+                'Target Weight': 'target_weight'
+                }
+
 # ----------------------------- Functions ---------------------------------------#
-def load_and_preprocess_data_sw(folder_path, reference):
-    reference = reference.drop_duplicates(subset='fund_key')
-    reference_subset = reference[['fund_key', 'fund_glidepath']]
 
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".xlsx"):  # only process Excel files
-            file_path = os.path.join(folder_path, filename)
-            weekly_file = pd.read_excel(file_path)
-
-            weekly_file = weekly_file.drop(columns=[
-                'MCH Code',
-                'Asset Pool',
-                'Code',
-                'Previous Val',
-                'Current Price',
-                'Previous Price',
-                'Val % Mvmt',
-                'Price % Mvmt'
-            ])
-            weekly_file = weekly_file.rename(columns={
-                                        'Fund Name': 'fund_label',
-                                        'Component Fund': 'fund_underlying',
-                                        'SW Codes': 'fund_key',
-                                        'Current Val': 'valuation',
-                                        'Mix At Date%': 'actual_weight',
-                                        'Allocation%': 'target_weight'
-                                        })
-            # date_input = input("Please enter a date (YYYY-MM-DD): ")
-            date_input = '2024-05-31'  # replace with your date input
-
-            weekly_file = weekly_file.assign(date=date_input)
-            weekly_file['date'] = pd.to_datetime(weekly_file['date'])
-            df = weekly_file.merge(reference_subset, on='fund_key', how='left')
-            return df  
-
-
-def load_and_preprocess_data_av(folder_path, reference):
+def load_and_preprocess_data(folder_path, reference, read_columns):
     reference = reference.drop_duplicates(subset='fund_key')
     reference_subset = reference[['fund_key', 'fund_glidepath','fund_underlying']]
 
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".xlsx"):  # only process Excel files
-            file_path = os.path.join(folder_path, filename)
-            weekly_file = pd.read_excel(file_path)
+    # Get list of all files, and their full paths
+    files = [os.path.join(folder_path, filename) for filename in os.listdir(folder_path) if filename.endswith(".xlsx")]
+    # Find the latest file
+    latest_file = max(files, key=os.path.getmtime)
 
+    # Load the latest file
+    try:
+        weekly_file = pd.read_excel(latest_file, usecols=read_columns.keys())
+    except Exception as e:
+        raise ValueError(f"Error loading file '{latest_file}': {e}")
 
-            weekly_file = weekly_file.drop(columns=['Fund Code','Asset Code'])
-            weekly_file = weekly_file.rename(columns={
-                                            'Date': 'date', 
-                                            'Fund Name': 'fund_label',
-                                            'Description': 'fund_key',
-                                            'Holding Value': 'valuation',
-                                            'Weighting': 'actual_weight',
-                                            'Target Weight': 'target_weight'
-                                            })
-            weekly_file['date'] = pd.to_datetime(weekly_file['date'], dayfirst=True)
-            weekly_file['valuation'] = weekly_file['valuation'].str.replace(',', '').astype(float)
-            df = weekly_file.merge(reference_subset, on='fund_key', how='left')
-            return df
+    # Rename columns
+    weekly_file = weekly_file.rename(columns=read_columns)
+
+    # Convert 'date' column to datetime
+    weekly_file['date'] = pd.to_datetime(weekly_file['date'], dayfirst=True)
+
+    if weekly_file['valuation'].dtype == 'O': # if 'valuation' column is an object
+        weekly_file['valuation'] = weekly_file['valuation'].str.replace(',', '').astype(float)
+
+    df = weekly_file.merge(reference_subset, on='fund_key', how='left')
+    print(df.head(20))
+    return df  
+
 
 
 def add_glidepath_data(df, glidepath_lookback):
@@ -164,20 +154,20 @@ def calculate_difference_final(df):
         (df['static_target_lookup_value']),
         (df['glidepath_lookup_value'])
     )
-    # Check for negative values in the 'diff' column
+    # Check for negative values in the 'difference' column
     if (df['target_val'] < 0).any():
         raise ValueError("Validation Test: Negative value found in 'target_val' column")
     else:
         print('Validation Test: No negative values found in the column "target_val"')
         print('')
     
-    df['diff'] = df['actual_weight'] - df['target_val']
-    df['diff'] = df['diff'].round(4)
+    df['difference'] = df['actual_weight'] - df['target_val']
+    df['difference'] = df['difference'].round(4)
     return df
 
 
 def check_range(df, MIN_TEST, MAX_TEST):
-    mask = (df['diff'] < MIN_TEST) | (df['diff'] > MAX_TEST)
+    mask = (df['difference'] < MIN_TEST) | (df['difference'] > MAX_TEST)
     out_of_range_df = df[mask]
     if out_of_range_df.empty:
         date = df['date'].iloc[0]  # Access the date from the first row of the original DataFrame
@@ -202,40 +192,12 @@ def post_transformations(df):
     df['actual_weight'] = df['actual_weight'].apply(lambda x: '{:.1%}'.format(x))
     df['target_weight'] = df['target_weight'].apply(lambda x: '{:.1%}'.format(x))
     df['target_val'] = df['target_val'].apply(lambda x: '{:.1%}'.format(x))
-    df['diff'] = df['diff'].apply(lambda x: '{:.1%}'.format(x))
-    df = df.sort_values(by='diff')
+    df['difference'] = df['difference'].apply(lambda x: '{:.1%}'.format(x))
+    df = df.sort_values(by='difference')
     print('Post-transformations completed successfully.')
     return df
 
- 
-
-# def print_message(df, date, PROVIDER):
-
-#     date_str = date.strftime('%Y-%m-%d')
-#     message_df = pd.DataFrame({'Auto Generated Message': ['Rebalancing Monitoring Report for ' f"{PROVIDER}, "  + date_str]})
- 
-#     if df.empty:
-#         empty_df = pd.DataFrame({'Auto Generated Message': ['-> All funds are within the tolerance range of +/- 3%']})
-#         empty_line = pd.DataFrame({'Auto Generated Message': [' ']})
-#         message_df = pd.concat([message_df, empty_df], ignore_index=True)
-#         message_df = pd.concat([message_df, empty_line], ignore_index=True)
-#     else:
-#         errors_df = pd.DataFrame({'Auto Generated Message': ['-> Please see below funds out of the tolerance range of +/- 3%']})
-#         empty_line = pd.DataFrame({'Auto Generated Message': [' ']})
-#         message_df = pd.concat([message_df, errors_df], ignore_index=True)
-#         message_df = pd.concat([message_df, empty_line], ignore_index=True)
-    
-#     message = tabulate(message_df, headers='keys', tablefmt='simple', showindex=False)
-
-#     df = df.drop(columns=['date'])
-
-#     if not df.empty:
-#         message += "\n" + tabulate(df, headers='keys', tablefmt='simple', showindex=False)
-
-#     return message
-
-
-
+ #----------------------------- Teams Integration ---------------------------------------#
 
 def dataframe_to_adaptivecard_table(df):
     # Define the columns
@@ -271,42 +233,82 @@ def dataframe_to_adaptivecard_table(df):
     return table
 
  
-def send_dataframe_to_teams(df, webhook_url, provider,date_result):
-    # Store 'date' column in a variable
-    #date = df['date'].iloc[0]
+def send_dataframe_to_teams(df, webhook_url, provider, date_result):
 
-    # Drop 'date' column from DataFrame
-    df = df.drop(columns=['date'])
-    
-    # Create the Adaptive Card message
-    message = {
-        "type": "message",
-        "attachments": [{
-            "contentType": "application/vnd.microsoft.card.adaptive",
-            "content": {
-                "type": "AdaptiveCard",
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "version": "1.2",
-                "body": [
-                    {
-                        "type": "TextBlock",
-                        "text": "Auto Generated Report",
-                        "weight": "Bolder",
-                        "size": "Medium"
-                    },
-                    {
-                        "type": "TextBlock",
-                        "text": f"Rebalancing Monitoring Report for {provider}, {date_result}",
-                        "wrap": True
-                    },
-                    dataframe_to_adaptivecard_table(df)
-                ],
-                "msteams": {
-                    "width": "Full"
+    # Check if DataFrame is empty
+    if df.empty:
+        # Create a different message for empty DataFrame
+        message = {
+            "type": "message",
+            "attachments": [{
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                    "type": "AdaptiveCard",
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "version": "1.2",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Auto Generated Report",
+                            "weight": "Bolder",
+                            "size": "Medium"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": f"{date_result}  Rebalancing Monitoring Report for {provider} ",
+                            "wrap": True
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "All funds are within the tolerance range of +/- 3%",
+                            "wrap": True
+                        }
+                    ],
+                    "msteams": {
+                        "width": "Full"
+                    }
                 }
-            }
-        }]
-    }
+            }]
+        }
+    else:
+        # Drop 'date' column from DataFrame
+        df = df.drop(columns=['date'])
+        
+        # Create the Adaptive Card message
+        message = {
+            "type": "message",
+            "attachments": [{
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "content": {
+                    "type": "AdaptiveCard",
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "version": "1.2",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Auto Generated Report",
+                            "weight": "Bolder",
+                            "size": "Medium"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": f"{date_result} Rebalancing Monitoring Report for {provider} ",
+                            "wrap": True
+                        },
+                                                {
+                            "type": "TextBlock",
+                            "text": "Please see below funds out of the tolerance range of +/- 3%",
+                            "wrap": True
+                        },
+                        
+                        dataframe_to_adaptivecard_table(df)
+                    ],
+                    "msteams": {
+                        "width": "Full"
+                    }
+                }
+            }]
+        }
 
 
 

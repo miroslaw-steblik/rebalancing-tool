@@ -5,38 +5,12 @@ import utils.pipeline as pl
 import utils.validations as val
 import utils.config as config
 
-#----------------------------- Pipeline ---------------------------------------#
-pre_columns = {
-    'date': 'datetime64[ns]',
-    'fund_label': 'object',
-    'fund_underlying': 'object',
-    'fund_key': 'object',
-    'fund_glidepath': 'object',
-    'valuation': 'float64',
-    'actual_weight': 'float64',
-    'target_weight': 'float64',
-}
-post_columns = {
-    'date': 'datetime64[ns]',
-    'fund_label': 'object',
-    'fund_underlying': 'object',
-    'fund_key': 'object',
-    'fund_glidepath': 'object',
-    'glidepath': 'object',
-    'actual_weight': 'float64',
-    'target_weight': 'float64',
-    'valuation': 'float64',
-    'year': 'float64',
-    'month': 'float64',
-    'glidepath_lookup_value': 'float64',
-    'static_target_lookup_value': 'float64',
-    'target_val': 'float64',
-    'diff': 'float64',
-}
-
+# set option to display all columns
+pd.set_option('display.max_columns', None)
 #----------------------------- Read data ---------------------------------------#
-PROVIDER = 'AV'
-av_weekly = ('rebalancing_tool/data/av_weekly')
+PROVIDER = 'Aviva'
+
+av_weekly = 'rebalancing_tool/data/av_weekly'
 
 av_reference = pd.read_csv('rebalancing_tool/data/reference/av_reference.csv')
 av_static_funds_targets = pd.read_csv('rebalancing_tool/data/reference/av_static_funds_targets.csv')
@@ -55,27 +29,31 @@ glidepath_lookback = 'YES'
 #----------------------------- Main ---------------------------------------#
 
 def process():
+    # Load data
     all_glidepaths = merged_glidepaths()
-    df = pl.load_and_preprocess_data_av(av_weekly, av_reference)
+    df = pl.load_and_preprocess_data(av_weekly, av_reference, pl.av_read_columns)
+    #pl.check_columns
 
-    val.validate_columns(df, pre_columns)
+    # Validations
+    val.validate_columns(df, pl.pre_columns)
     val.test_no_duplicates(df)  
 
+    # Main processing and calculations
     df = pl.add_glidepath_data(df, glidepath_lookback)
     df = pl.add_lookup_values(df, all_glidepaths)
     df = pl.add_static_target_values(df, av_static_funds_targets)
     df = pl.calculate_difference_final(df)
-    
-    df.to_csv(av_output, index=False)
-    print(df.info())
 
+    # Save output
+    df.to_csv(av_output, index=False)
+
+    # Post processing and validations
     validated_df, date_result = pl.check_range(df, MIN_TEST, MAX_TEST)
     validated_df = pl.post_transformations(validated_df)
-    print(date_result)
+    val.test_no_invalid_dates(validated_df)
 
-    test = val.test_no_invalid_dates(validated_df)
-
-    #pl.send_dataframe_to_teams(validated_df, webhook_url, provider=PROVIDER)
+    # Send to Teams
+    pl.send_dataframe_to_teams(validated_df, webhook_url, provider=PROVIDER, date_result=date_result)
 
     print('Done!')
 
