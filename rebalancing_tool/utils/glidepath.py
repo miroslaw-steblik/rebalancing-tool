@@ -1,11 +1,12 @@
 import pandas as pd
 import datetime
+import utils.config as config
 
 
-fund_1 = 'MAG'
-fund_2 = 'DRF'
-fund_3 = 'cash'
-fund_4 = 'pre_ret_fund'
+fund_1 = config.fund_1
+fund_2 = config.fund_2
+fund_3 = config.fund_3
+fund_4 = config.fund_4
 
 cash_glidepath = {
                 'year':             [    8,    7,    6,    5,    4,    3,    2,    1,     0], 
