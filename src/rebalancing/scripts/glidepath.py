@@ -2,7 +2,7 @@ import pandas as pd
 import datetime
 
 
-glidepaths_output = "G:\\Eworking\\MWS\\New Investments\\2. Operations & Implementation\\Platforms\\Rebalancing-Monitoring\\config\\reference\\glidepaths.csv"
+glidepaths_output = " <path\\to\\file> \\config\\reference\\glidepaths.csv"
 
 # funds
 fund_1 = 'MAG'
