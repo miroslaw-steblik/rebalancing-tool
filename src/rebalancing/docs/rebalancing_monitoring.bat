@@ -3,8 +3,8 @@
 REM Batch file to run the Python script with client argument
 
 REM Set the virtual environment and script paths
-set "VENV_PATH=C:\Users\miroslaw-steblik\my-python-projects\white\rebalancing\venv"
-set "SCRIPT_PATH=C:\Users\miroslaw-steblik\my-python-projects\white\rebalancing\src\rebalancing\main.py"
+set "VENV_PATH=C:\Users\miroslaw-steblik\ <path\to\file> "
+set "SCRIPT_PATH=C:\Users\miroslaw-steblik\ <path\to\file> \main.py"
 
 
 REM Check if an argument is provided
