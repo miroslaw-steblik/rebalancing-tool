@@ -3,7 +3,7 @@ import toml
 
 class Config:
     def __init__(self, provider):
-        self._config = self._load_config('C:\\Users\\miroslaw-steblik\\my-python-projects\\white\\.config\\config.toml')
+        self._config = self._load_config(' <path\to\file> \\.config\\config.toml')
         self.provider = provider
 
     def _load_config(self, config_file):
